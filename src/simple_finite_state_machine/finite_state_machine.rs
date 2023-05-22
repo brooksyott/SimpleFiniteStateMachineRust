@@ -54,7 +54,7 @@ where
         };
 
         if result != true {
-            return Err("Some error".to_string());
+            return Err("Could not transition state, return code false".to_string());
         }
 
         Ok(())
@@ -62,14 +62,42 @@ where
 
     /// Transition between states based on the trigger
     fn transition_states(&mut self, trigger: &TTriggers) -> Result<bool, String> {
-        let state_node = self.state_nodes.get(&self.current_state).unwrap();
-        let next_state = state_node.next_state(trigger).unwrap();
-        let next_state_node = self.state_nodes.get(next_state).unwrap();
+        let state_node_option = self.state_nodes.get(&self.current_state);
+        let state_node = match state_node_option {
+            None => {println!("Current state not found"); return Err("Current state not found".to_string());}
+            Some(s) => s
+        };
+        let next_state_result = state_node.next_state(trigger);
+        let next_state = match next_state_result {
+            Err(e) => { return Err(e.to_string()) }
+            Ok(ns) => ns
+        };
 
+        // If the next state is the same as the current state,
+        // do NOT call the entry and exit
+        if Self::enums_equal(next_state, &self.current_state) {
+            return Ok(true);
+        }
+
+        // call the exiting state actions
         state_node.exiting_state(trigger);
+
+        // set the new state, and call the entering state actions
         self.current_state = next_state.clone();
+        let next_state_node_option = self.state_nodes.get(next_state);
+        let next_state_node = match next_state_node_option {
+            None => {println!("Nothing found"); return Err("Nothing found".to_string());}
+            Some(s) => s
+        };
+
         next_state_node.entering_state(&trigger);
+
         Ok(true)
+    }
+
+    /// Perform a comparison of the generic enum types
+    fn enums_equal<T: PartialEq>(a: &T, b: &T) -> bool {
+        a.eq(b)
     }
 
     /// Allows the user to gain access to any state node

@@ -46,7 +46,7 @@ impl<TStates, TTriggers: PartialEq> StateNode<TStates, TTriggers> {
 
     /// Add a function to be called upon exiting this state
     pub fn on_exit(&mut self, cb: ExecCallback<TTriggers>) -> &mut Self {
-        self.on_entry_action.push(cb);
+        self.on_exit_action.push(cb);
         self
     }
 
@@ -63,7 +63,7 @@ impl<TStates, TTriggers: PartialEq> StateNode<TStates, TTriggers> {
             }
         }
 
-        Err("Not found".to_string())
+        Err("Transition not found".to_string())
     }
 
     /// Perform a comparison of the generic enum types
@@ -113,7 +113,7 @@ impl<TStates, TTriggers: PartialEq> StateNode<TStates, TTriggers> {
     pub fn exiting_state(&self, trigger: &TTriggers) {
         if self.on_exit_action.len() > 0 {
             for action in self.on_exit_action.iter() {
-                action(&trigger);
+                action(trigger);
             }
         }
     }
