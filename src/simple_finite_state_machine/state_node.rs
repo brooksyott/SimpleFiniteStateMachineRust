@@ -1,4 +1,5 @@
 use crate::simple_finite_state_machine::shared_types::ExecCallback;
+use crate::simple_finite_state_machine::shared_types::ClosureCallBack;
 use crate::simple_finite_state_machine::state_node::transition::Transition;
 
 /// =================================================================================
@@ -17,6 +18,7 @@ pub struct StateNode<TStates, TTriggers> {
     state: TStates, // State value of this node
 
     on_entry_action: Vec<ExecCallback<TTriggers>>, // Functions to call when entering this state
+    on_entry_action_c: Vec<fn()>, // Functions to call when entering this state
     on_exit_action: Vec<ExecCallback<TTriggers>>,  // Functions to call when exiting this state
 
     transitions: Vec<Transition<TStates, TTriggers>>, // Allowed transitions
@@ -28,6 +30,7 @@ impl<TStates, TTriggers: PartialEq> StateNode<TStates, TTriggers> {
         StateNode {
             state,
             on_entry_action: Vec::new(),
+            on_entry_action_c: Vec::new(),
             on_exit_action: Vec::new(),
             transitions: Vec::new(),
         }
@@ -41,6 +44,12 @@ impl<TStates, TTriggers: PartialEq> StateNode<TStates, TTriggers> {
     /// Add a function to be called upon entering this state
     pub fn on_entry(&mut self, cb: ExecCallback<TTriggers>) -> &mut Self {
         self.on_entry_action.push(cb);
+        self
+    }
+
+    /// Add a function to be called upon entering this state
+    pub fn on_entry_c(&mut self, f: fn()) -> &mut Self {
+        self.on_entry_action_c.push(f);
         self
     }
 
@@ -105,6 +114,11 @@ impl<TStates, TTriggers: PartialEq> StateNode<TStates, TTriggers> {
         if self.on_entry_action.len() > 0 {
             for action in self.on_entry_action.iter() {
                 action(trigger);
+            }
+        }
+        if self.on_entry_action_c.len() > 0 {
+            for action in self.on_entry_action_c.iter() {
+                action();
             }
         }
     }

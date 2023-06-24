@@ -30,12 +30,14 @@ pub enum PhoneStates {
 }
 
 pub struct PhoneFsm<PhoneTriggers> {
+    val: i32,
     fsm: FiniteStateMachine::<PhoneStates, PhoneTriggers>,
 }
 
 impl PhoneFsm<PhoneTriggers> {
     pub fn new() -> Self {
         PhoneFsm {
+            val: 5,
             fsm: FiniteStateMachine::<PhoneStates, PhoneTriggers>::new(&PhoneStates::OnHook)
         }
     }
@@ -52,6 +54,7 @@ impl PhoneFsm<PhoneTriggers> {
 
         self.fsm.configure(PhoneStates::Ringing).unwrap()
             .on_entry(Self::phone_ringing)
+            // .on_entry_c(||  {  Self::hi(self.val.clone()); } )
             .permit(PhoneTriggers::CallConnected, PhoneStates::Connected)
             .permit(PhoneTriggers::Hangup, PhoneStates::OnHook);
 
@@ -62,6 +65,10 @@ impl PhoneFsm<PhoneTriggers> {
             .permit(PhoneTriggers::MuteMicrophone, PhoneStates::Connected)
             .permit(PhoneTriggers::UnmuteMicrophone, PhoneStates::Connected)
             .permit(PhoneTriggers::SetVolume, PhoneStates::Connected);
+    }
+
+    pub fn hi(v: i32){
+        println!("HI DAVE: {}", v);
     }
 
     pub fn on_hook<TTriggers: Display>(trigger: &TTriggers) {
